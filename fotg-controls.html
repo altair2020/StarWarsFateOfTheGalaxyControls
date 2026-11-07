@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fate of the Galaxy: Flight Controls</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05070c; --panel:#0b1220; --panel2:#0f1a2e; --line:#1c2c48;
+    --text:#d7e2f5; --dim:#7f93b5; --accent:#ffb627; --cyan:#4fd1ff;
+    --red:#ff4d5e; --green:#4dffa6; --key:#16233d; --keyb:#2a4170;
+  }
+  /* Font test: install the fonts, or drop files in ./fonts/ (starjedi.ttf, distantgalaxy.ttf) */
+  @font-face{font-family:"TestStarJedi";src:local("Star Jedi"),local("StarJedi"),url("fonts/Starjedi.ttf") format("truetype")}
+  @font-face{font-family:"TestDistantGalaxy";src:url("fonts/SF%20Distant%20Galaxy.ttf") format("truetype")}
+  :root{--display:"TestDistantGalaxy",Orbitron}
+  body[data-font=starjedi]{--display:"TestStarJedi",Orbitron}
+  body[data-font=orbitron]{--display:Orbitron}
+  body[data-font=distant]{--display:"TestDistantGalaxy",Orbitron}
+  #fontsel{background:var(--panel);border:1px solid var(--keyb);color:var(--text);padding:10px;border-radius:8px;font:inherit}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Rajdhani,system-ui,sans-serif;font-size:17px}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(79,209,255,.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(255,182,39,.06), transparent 60%),
+      var(--bg);
+    min-height:100vh;
+  }
+  .stars{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.55;
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 72% 34%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 44% 78%, #cfe 50%, transparent 51%),
+      radial-gradient(1px 1px at 88% 82%, #fff 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 26% 58%, #ffd 50%, transparent 51%),
+      radial-gradient(1px 1px at 60% 10%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 5% 90%, #fff 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 95% 50%, #def 50%, transparent 51%);
+  }
+  .wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:32px 20px 60px}
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;border-bottom:1px solid var(--line);padding-bottom:18px}
+  h1{font-family:var(--display),sans-serif;font-weight:900;letter-spacing:.08em;margin:0;font-size:clamp(24px,4vw,40px);color:var(--accent);text-shadow:0 0 18px rgba(255,182,39,.35)}
+  .sub{font-family:var(--display),sans-serif;font-size:12px;letter-spacing:.3em;color:var(--cyan);margin-top:6px;text-transform:uppercase}
+  .tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input[type=search]{background:var(--panel);border:1px solid var(--keyb);color:var(--text);padding:10px 14px;border-radius:8px;font:inherit;width:260px;outline:none}
+  input[type=search]:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(79,209,255,.15)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:8px 12px;border-radius:999px;cursor:pointer;font:600 13px Rajdhani;letter-spacing:.08em;text-transform:uppercase}
+  .chip.on{color:#000;background:var(--accent);border-color:var(--accent)}
+
+  .essentials{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:28px}
+  .ess{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden}
+  .ess::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+  .ess .lbl{font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+  .ess .k{margin-top:6px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(560px,1fr));gap:18px}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}}
+  section.card{background:linear-gradient(180deg,rgba(15,26,46,.92),rgba(11,18,32,.92));border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .card h2{margin:0;padding:14px 18px;font-family:var(--display),sans-serif;font-size:15px;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.25)}
+  .card h2 .dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 10px currentColor}
+  .card h3{margin:0;padding:10px 18px 4px;font-size:12px;letter-spacing:.25em;color:var(--dim);text-transform:uppercase;font-weight:700}
+  table{width:100%;border-collapse:collapse}
+  td{padding:7px 18px;border-top:1px solid rgba(28,44,72,.55);vertical-align:middle}
+  tr:first-child td{border-top:none}
+  tr:hover td{background:rgba(79,209,255,.05)}
+  td.act{font-weight:600;font-size:16px}
+  td.bind{text-align:right;white-space:nowrap}
+  td.bind .alt{display:block;margin-top:4px}
+  .k{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+  kbd{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:12.5px;background:var(--key);border:1px solid var(--keyb);border-bottom-width:3px;border-radius:6px;padding:3px 8px;color:#eaf2ff;min-width:26px;text-align:center}
+  .plus{color:var(--dim);font-size:12px}
+  .dev{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--cyan);border:1px dashed rgba(79,209,255,.45);border-radius:6px;padding:2px 7px;background:rgba(79,209,255,.06)}
+  .mouse{color:var(--green);border-color:rgba(77,255,166,.45);background:rgba(77,255,166,.06)}
+  .none{color:#4a5a78;font-style:italic;font-size:13px}
+  .warn td.act::after{content:"CAUTION";margin-left:8px;font:700 10px Orbitron;letter-spacing:.15em;color:var(--red);border:1px solid var(--red);border-radius:4px;padding:1px 5px;vertical-align:middle}
+  .star td.act::before{content:"\2605 ";color:var(--accent)}
+  .hidden{display:none!important}
+
+  .notes{margin-top:24px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:10px;padding:14px 18px;color:var(--dim)}
+  .notes b{color:var(--text)}
+  .notes ul{margin:6px 0 0;padding-left:18px}
+  .notes li{margin:4px 0}
+  footer{margin-top:26px;color:#4a5a78;font-size:13px;text-align:center;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>FATE OF THE GALAXY</h1>
+      <div class="sub">Pilot Control Reference // Preset: Default</div>
+    </div>
+    <div class="tools">
+      <select id="fontsel" aria-label="Heading font test" onchange="document.body.dataset.font=this.value">
+        <option value="distant" selected>Font: Distant Galaxy</option>
+        <option value="starjedi">Font: Star Jedi</option>
+        <option value="orbitron">Font: Orbitron</option>
+      </select>
+      <input id="q" type="search" placeholder="Search controls or keys..." aria-label="Search controls">
+      <div class="chips" id="chips">
+        <button class="chip on" data-f="all">All</button>
+        <button class="chip" data-f="weapons">Weapons</button>
+        <button class="chip" data-f="ship">Ship</button>
+        <button class="chip" data-f="targeting">Targeting</button>
+        <button class="chip" data-f="misc">Misc</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="essentials" id="essentials">
+    <div class="ess"><div class="lbl">Fire Primary</div><div class="k"><span class="dev mouse">Mouse L</span></div></div>
+    <div class="ess"><div class="lbl">Fire Secondary</div><div class="k"><kbd>Tab</kbd></div></div>
+    <div class="ess"><div class="lbl">Cycle Primary</div><div class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>E</kbd></div></div>
+    <div class="ess"><div class="lbl">Cycle Secondary</div><div class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>Q</kbd></div></div>
+    <div class="ess"><div class="lbl">Nearest Hostile</div><div class="k"><kbd>H</kbd></div></div>
+    <div class="ess"><div class="lbl">Who's Shooting Me</div><div class="k"><kbd>G</kbd></div></div>
+    <div class="ess"><div class="lbl">Match Speed</div><div class="k"><kbd>M</kbd></div></div>
+    <div class="ess"><div class="lbl">Aim / Maneuver Mode</div><div class="k"><span class="dev mouse">Mouse R</span></div></div>
+  </div>
+
+  <div class="grid" id="grid">
+
+    <!-- WEAPONS -->
+    <section class="card" data-cat="weapons">
+      <h2><span class="dot" style="color:var(--red);background:var(--red)"></span>Weapons / Energy</h2>
+      <h3>Firing &amp; Selection</h3>
+      <table>
+        <tr class="star"><td class="act">Fire Primary Weapon</td><td class="bind"><span class="k"><span class="dev mouse">Mouse Left</span><span class="dev">Dev-1 Btn 0</span></span></td></tr>
+        <tr class="star"><td class="act">Fire Secondary Weapon</td><td class="bind"><span class="k"><kbd>Tab</kbd></span></td></tr>
+        <tr class="star"><td class="act">Cycle Primary Weapon</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>E</kbd></span></td></tr>
+        <tr class="star"><td class="act">Cycle Secondary Weapon</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>Q</kbd></span></td></tr>
+        <tr><td class="act">Cycle Primary Firing Rate (link)</td><td class="bind"><span class="k"><kbd>E</kbd><span class="dev">Dev-1 Btn 4</span></span></td></tr>
+        <tr><td class="act">Cycle Secondary Firing Rate</td><td class="bind"><span class="k"><kbd>Q</kbd></span></td></tr>
+        <tr><td class="act">Toggle Targeting Computer</td><td class="bind"><span class="k"><kbd>Z</kbd></span></td></tr>
+        <tr><td class="act">Toggle Stationary Target Mode</td><td class="bind"><span class="k"><kbd>X</kbd><span class="dev">Dev-1 Btn 5</span></span></td></tr>
+      </table>
+      <h3>Power Management</h3>
+      <table>
+        <tr><td class="act">Increase Weapon Energy</td><td class="bind"><span class="k"><kbd>PgUp</kbd></span></td></tr>
+        <tr><td class="act">Decrease Weapon Energy</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>PgUp</kbd></span></td></tr>
+        <tr><td class="act">Increase Shield Energy</td><td class="bind"><span class="k"><kbd>End</kbd></span></td></tr>
+        <tr><td class="act">Decrease Shield Energy</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>End</kbd></span></td></tr>
+        <tr><td class="act">Increase Engine Energy</td><td class="bind"><span class="k"><kbd>PgDn</kbd></span></td></tr>
+        <tr><td class="act">Decrease Engine Energy</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>PgDn</kbd></span></td></tr>
+        <tr><td class="act">Equalize Energy Settings</td><td class="bind"><span class="k"><kbd>Home</kbd></span></td></tr>
+      </table>
+      <h3>Shields</h3>
+      <table>
+        <tr><td class="act">Equalize Shield</td><td class="bind"><span class="k"><kbd>CapsLock</kbd><span class="dev">Dev-1 Btn 7</span></span></td></tr>
+        <tr><td class="act">Augment Forward Shield</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>W</kbd></span></td></tr>
+        <tr><td class="act">Augment Rear Shield</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>S</kbd></span></td></tr>
+      </table>
+    </section>
+
+    <!-- SHIP -->
+    <section class="card" data-cat="ship">
+      <h2><span class="dot" style="color:var(--accent);background:var(--accent)"></span>Ship</h2>
+      <h3>Flight</h3>
+      <table>
+        <tr class="star"><td class="act">Forward Thrust</td><td class="bind"><span class="k"><kbd>W</kbd></span></td></tr>
+        <tr class="star"><td class="act">Reverse Thrust</td><td class="bind"><span class="k"><kbd>S</kbd></span></td></tr>
+        <tr class="star"><td class="act">Bank Left</td><td class="bind"><span class="k"><kbd>A</kbd></span></td></tr>
+        <tr class="star"><td class="act">Bank Right</td><td class="bind"><span class="k"><kbd>D</kbd></span></td></tr>
+        <tr><td class="act">Pitch Forward</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>W</kbd></span></td></tr>
+        <tr><td class="act">Pitch Backward</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>S</kbd></span></td></tr>
+        <tr><td class="act">Turn Left</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>A</kbd></span></td></tr>
+        <tr><td class="act">Turn Right</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>D</kbd></span></td></tr>
+      </table>
+      <h3>Throttle</h3>
+      <table>
+        <tr><td class="act">Set Throttle to Zero</td><td class="bind"><span class="k"><kbd>Backspace</kbd></span></td></tr>
+        <tr><td class="act">Set Throttle to One-Third</td><td class="bind"><span class="k"><kbd>[</kbd></span></td></tr>
+        <tr><td class="act">Set Throttle to Two-Thirds</td><td class="bind"><span class="k"><kbd>]</kbd></span></td></tr>
+        <tr><td class="act">Set Throttle to Max</td><td class="bind"><span class="k"><kbd>\</kbd></span></td></tr>
+        <tr><td class="act">Increase Throttle 5%</td><td class="bind"><span class="none">Unbound</span></td></tr>
+        <tr><td class="act">Decrease Throttle 5%</td><td class="bind"><span class="none">Unbound</span></td></tr>
+      </table>
+      <h3>Systems</h3>
+      <table>
+        <tr class="star"><td class="act">Toggle Mouse Movement Mode</td><td class="bind"><span class="k"><kbd>N</kbd><span class="dev mouse">Mouse Right</span></span></td></tr>
+        <tr><td class="act">Toggle S-foils</td><td class="bind"><span class="k"><kbd>;</kbd></span></td></tr>
+        <tr><td class="act">Toggle Floodlight</td><td class="bind"><span class="k"><kbd>O</kbd></span></td></tr>
+        <tr><td class="act">Toggle Active Pause</td><td class="bind"><span class="k"><kbd>P</kbd></span></td></tr>
+        <tr class="warn"><td class="act">Enter Hyperspace (End Mission)</td><td class="bind"><span class="k"><kbd>Return</kbd></span></td></tr>
+      </table>
+      <h3>Axes</h3>
+      <table>
+        <tr><td class="act">Turn (Yaw) Axis</td><td class="bind"><span class="k"><span class="dev">Dev-1 X Axis</span><span class="dev mouse">Mouse X</span></span></td></tr>
+        <tr><td class="act">Pitch Axis</td><td class="bind"><span class="k"><span class="dev">Dev-1 Y Axis</span><span class="dev mouse">Mouse Y</span></span></td></tr>
+        <tr><td class="act">Bank Axis</td><td class="bind"><span class="k"><span class="dev">Dev-1 rX Axis</span></span></td></tr>
+        <tr><td class="act">Absolute Throttle Axis</td><td class="bind"><span class="none">Unbound</span></td></tr>
+      </table>
+    </section>
+
+    <!-- TARGETING -->
+    <section class="card" data-cat="targeting">
+      <h2><span class="dot" style="color:var(--cyan);background:var(--cyan)"></span>Targeting</h2>
+      <h3>Ships</h3>
+      <table>
+        <tr class="star"><td class="act">Target Next Closest Hostile</td><td class="bind"><span class="k"><kbd>H</kbd><span class="dev">Dev-1 Btn 3</span></span></td></tr>
+        <tr><td class="act">Target Prev Closest Hostile</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>H</kbd></span></td></tr>
+        <tr class="star"><td class="act">Target Closest Attacking Ship</td><td class="bind"><span class="k"><kbd>G</kbd><span class="dev">Dev-1 Btn 2</span></span></td></tr>
+        <tr class="star"><td class="act">Target Ship in Reticle</td><td class="bind"><span class="k"><kbd>Space</kbd><span class="dev">Dev-1 Btn 1</span></span></td></tr>
+        <tr class="star"><td class="act">Target Next Priority Ship</td><td class="bind"><span class="k"><kbd>F</kbd></span></td></tr>
+        <tr><td class="act">Target Next Ship</td><td class="bind"><span class="k"><kbd>T</kbd></span></td></tr>
+        <tr><td class="act">Target Previous Ship</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>T</kbd></span></td></tr>
+        <tr><td class="act">Target Next Closest Friendly</td><td class="bind"><span class="k"><kbd>Y</kbd></span></td></tr>
+        <tr><td class="act">Target Prev Closest Friendly</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>Y</kbd></span></td></tr>
+        <tr><td class="act">Target Target's Nearest Pursuer</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>G</kbd><span class="dev">Dev-1 Btn 6</span></span></td></tr>
+        <tr><td class="act">Target Target's Target</td><td class="bind"><span class="k"><kbd>J</kbd></span></td></tr>
+        <tr><td class="act">Target Last Ship to Transmit</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>F</kbd></span></td></tr>
+        <tr><td class="act">Target Newest Ship in Area</td><td class="bind"><span class="k"><kbd>K</kbd></span></td></tr>
+      </table>
+      <h3>Subsystems &amp; Turrets</h3>
+      <table>
+        <tr><td class="act">Target Subsystem in Reticle</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>Space</kbd></span></td></tr>
+        <tr><td class="act">Target Next Subsystem</td><td class="bind"><span class="k"><kbd>V</kbd></span></td></tr>
+        <tr><td class="act">Target Previous Subsystem</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>V</kbd></span></td></tr>
+        <tr><td class="act">Untarget Current Subsystem</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>V</kbd></span></td></tr>
+        <tr><td class="act">Target Next Live Turret</td><td class="bind"><span class="k"><kbd>B</kbd></span></td></tr>
+        <tr><td class="act">Target Previous Live Turret</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>B</kbd></span></td></tr>
+      </table>
+      <h3>Cargo &amp; Auto</h3>
+      <table>
+        <tr><td class="act">Target Next Uninspected Cargo</td><td class="bind"><span class="k"><kbd>U</kbd></span></td></tr>
+        <tr><td class="act">Target Prev Uninspected Cargo</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>U</kbd></span></td></tr>
+        <tr><td class="act">Toggle Auto Targeting</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>Shift</kbd><span class="plus">+</span><kbd>T</kbd></span></td></tr>
+        <tr><td class="act">Turn Off Auto-Targeting</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>T</kbd></span></td></tr>
+      </table>
+    </section>
+
+    <!-- MISC -->
+    <section class="card" data-cat="misc">
+      <h2><span class="dot" style="color:var(--green);background:var(--green)"></span>Miscellaneous</h2>
+      <h3>Speed</h3>
+      <table>
+        <tr class="star"><td class="act">Match Target Speed</td><td class="bind"><span class="k"><kbd>M</kbd></span></td></tr>
+        <tr><td class="act">Toggle Auto Speed Matching</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>M</kbd></span></td></tr>
+      </table>
+      <h3>Wingman Orders</h3>
+      <table>
+        <tr class="star"><td class="act">Attack My Target</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>1</kbd></span></td></tr>
+        <tr><td class="act">Disable My Target</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>2</kbd></span></td></tr>
+        <tr><td class="act">Disarm My Target</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>3</kbd></span></td></tr>
+        <tr><td class="act">Attack My Targeted Subsystem</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>4</kbd></span></td></tr>
+        <tr><td class="act">Protect My Target</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>5</kbd></span></td></tr>
+        <tr><td class="act">Ignore My Target</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>6</kbd></span></td></tr>
+        <tr><td class="act">Form on My Wing</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>7</kbd></span></td></tr>
+        <tr class="star"><td class="act">Cover Me</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>8</kbd></span></td></tr>
+        <tr><td class="act">Engage Enemy</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>9</kbd></span></td></tr>
+        <tr><td class="act">Return to Base</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>0</kbd></span></td></tr>
+      </table>
+      <h3>Camera &amp; Views</h3>
+      <table>
+        <tr><td class="act">Toggle First/Third Person</td><td class="bind"><span class="k"><kbd>-</kbd></span></td></tr>
+        <tr><td class="act">Toggle Cinematic Camera</td><td class="bind"><span class="k"><kbd>=</kbd></span></td></tr>
+        <tr><td class="act">Toggle Cinematic Camera Lock</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>=</kbd></span></td></tr>
+        <tr><td class="act">Free-Look (First Person)</td><td class="bind"><span class="k"><kbd>L</kbd></span></td></tr>
+        <tr><td class="act">Current Target View</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>-</kbd></span></td></tr>
+        <tr><td class="act">Increase View Distance</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>.</kbd></span></td></tr>
+        <tr><td class="act">Decrease View Distance</td><td class="bind"><span class="k"><kbd>Alt</kbd><span class="plus">+</span><kbd>,</kbd></span></td></tr>
+        <tr><td class="act">Center View</td><td class="bind"><span class="k"><kbd>Shift</kbd><span class="plus">+</span><kbd>=</kbd></span></td></tr>
+        <tr><td class="act">View Up</td><td class="bind"><span class="k"><kbd>&uarr;</kbd><span class="dev">Hat Back</span></span></td></tr>
+        <tr><td class="act">View Rear</td><td class="bind"><span class="k"><kbd>&darr;</kbd><span class="dev">Hat Left</span></span></td></tr>
+        <tr><td class="act">View Left</td><td class="bind"><span class="k"><kbd>&larr;</kbd><span class="dev">Hat Right</span></span></td></tr>
+      </table>
+    </section>
+  </div>
+
+  <div class="notes">
+    <b>Field notes</b>
+    <ul>
+      <li><b>&#9733;</b> marks the controls you'll use most in a fight.</li>
+      <li>Cycle Primary and Cycle Secondary use Alt combos by default. <kbd>R</kbd> and <kbd>C</kbd> are free on every tab captured here, so they're good single-key replacements.</li>
+      <li>The stick hat bindings look crossed: View Rear is on Hat Left and View Left is on Hat Right. Test them in flight before you rely on them.</li>
+      <li>Gamepad triggers (LT/RT) can only bind to "axis" controls for now.</li>
+      <li>This sheet comes from the default preset screens. Each tab's "More..." page has extra bindings not listed here.</li>
+    </ul>
+  </div>
+  <footer>MAY THE FORCE BE WITH YOU, PILOT</footer>
+</div>
+
+<script>
+(function(){
+  var q=document.getElementById('q'), chips=document.querySelectorAll('.chip'), cards=document.querySelectorAll('section.card'), ess=document.getElementById('essentials');
+  var cat='all';
+  function apply(){
+    var term=q.value.trim().toLowerCase();
+    cards.forEach(function(c){
+      var catOk = cat==='all' || c.dataset.cat===cat;
+      var any=false;
+      c.querySelectorAll('tr').forEach(function(r){
+        var hit = !term || r.textContent.toLowerCase().indexOf(term)>-1;
+        r.classList.toggle('hidden', !hit);
+        if(hit) any=true;
+      });
+      c.querySelectorAll('table').forEach(function(t){
+        var vis=t.querySelectorAll('tr:not(.hidden)').length>0;
+        t.classList.toggle('hidden',!vis);
+        var h=t.previousElementSibling;
+        if(h && h.tagName==='H3') h.classList.toggle('hidden',!vis);
+      });
+      c.classList.toggle('hidden', !(catOk && any));
+    });
+    ess.classList.toggle('hidden', !!term || cat!=='all');
+  }
+  q.addEventListener('input',apply);
+  chips.forEach(function(ch){ch.addEventListener('click',function(){
+    chips.forEach(function(x){x.classList.remove('on')}); ch.classList.add('on'); cat=ch.dataset.f; apply();
+  })});
+})();
+</script>
+</body>
+</html>
